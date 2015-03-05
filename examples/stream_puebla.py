@@ -24,7 +24,7 @@ def remove_special_characters(s):
 class DummyClient(WebSocketClient):
 
     def opened(self):
-      TRACK_TERM = 'EPN'
+      TRACK_TERM = "Puebla"
 
       CONSUMER_KEY = '9pBBabr7MpVbpOk7YPOx3RjYy'
       CONSUMER_SECRET = 'LH7A7jMjQqYXNK07WOIKqZv9tEBrovDmWv40Sg2Md61EjwPdEj'
@@ -38,14 +38,13 @@ class DummyClient(WebSocketClient):
           ACCESS_TOKEN_SECRET)
 
       r = api.request("statuses/filter", {"track":TRACK_TERM})
-      print r.get_iterator()
       for item in r.get_iterator():
         print item["text"]
-        self.send('{"path": "cards-manager/bc858ab2-3007-4b0e-888b-8bb8dd0d1f10", "message": "comment", "content": "'+remove_special_characters(item["text"]).encode("utf-8")+'"}')
+        self.send('{"path": "cards-manager/7ab0bec4-2832-4165-a67b-80256969cb89", "message": "comment", "content": "'+remove_special_characters(item["text"]).encode("utf-8")+'"}')
 
 if __name__ == '__main__':
   try:
-      ws = DummyClient('ws://localhost:8080/ws')
+      ws = DummyClient('wss://franciscogutierrez1-8080.terminal.com/ws')
       ws.connect()
       ws.run_forever()
   except KeyboardInterrupt:

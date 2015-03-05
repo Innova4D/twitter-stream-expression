@@ -1,6 +1,7 @@
 from TwitterAPI import TwitterAPI
 from ws4py.client.threadedclient import WebSocketClient
 import unicodedata
+import gzip
 
 def remove_special_characters(s):
            '''
@@ -24,7 +25,7 @@ def remove_special_characters(s):
 class DummyClient(WebSocketClient):
 
     def opened(self):
-      TRACK_TERM = "UDLAP"
+      TRACK_TERM = "Vive Latino"
 
       CONSUMER_KEY = 'vp4vDnkSY5RiozYE7ljBuxSCN'
       CONSUMER_SECRET = 'Wn1THfpm2H8Tc5ruG7b9NsJzA3C966XaKWMkrAQuk7q4PC4lgT'
@@ -41,11 +42,11 @@ class DummyClient(WebSocketClient):
       print r.status_code
       for item in r:
         print item["text"]
-        self.send('{"path": "cards-manager/1540c923-fbd1-4f67-a55b-c0eaa56ee1d0", "message": "comment", "content": "'+remove_special_characters(item["text"]).encode("utf-8")+'"}')
+        self.send('{"path": "cards-manager/3a0b3d8d-1261-4e81-979a-3c17279830c5", "message": "comment", "content": "'+remove_special_characters(item["text"]).encode("utf-8")+'"}')
 
 if __name__ == '__main__':
   try:
-      ws = DummyClient('ws://localhost:8080/ws')
+      ws = DummyClient('wss://franciscogutierrez1-8080.terminal.com/ws')
       ws.connect()
       ws.run_forever()
   except KeyboardInterrupt:

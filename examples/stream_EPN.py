@@ -1,7 +1,6 @@
 from TwitterAPI import TwitterAPI
 from ws4py.client.threadedclient import WebSocketClient
 import unicodedata
-import gzip
 
 def remove_special_characters(s):
            '''
@@ -25,12 +24,12 @@ def remove_special_characters(s):
 class DummyClient(WebSocketClient):
 
     def opened(self):
-      TRACK_TERM = "Corona Capital"
+      TRACK_TERM = 'EPN'
 
-      CONSUMER_KEY = 'vp4vDnkSY5RiozYE7ljBuxSCN'
-      CONSUMER_SECRET = 'Wn1THfpm2H8Tc5ruG7b9NsJzA3C966XaKWMkrAQuk7q4PC4lgT'
-      ACCESS_TOKEN_KEY = '19495636-ijh8Wtv6MvSBXj4CsOx7LTIdECQ6cNeWlES7jFjO5'
-      ACCESS_TOKEN_SECRET = 'b163IxuQDj72zPAK0ec50lvMzMZ2bW2ZRBwm3oM28UeZr'
+      CONSUMER_KEY = '9pBBabr7MpVbpOk7YPOx3RjYy'
+      CONSUMER_SECRET = 'LH7A7jMjQqYXNK07WOIKqZv9tEBrovDmWv40Sg2Md61EjwPdEj'
+      ACCESS_TOKEN_KEY = '19495636-lcYOEgKPfOp4xky5CTGQwzf5VdZuIcVV1ifGOi3ss'
+      ACCESS_TOKEN_SECRET = 'I4O0FciZA8HxqGgC6jEz6oS21kHWObPChLpI9Syd299Jf'
 
       api = TwitterAPI(
           CONSUMER_KEY,
@@ -39,14 +38,14 @@ class DummyClient(WebSocketClient):
           ACCESS_TOKEN_SECRET)
 
       r = api.request("statuses/filter", {"track":TRACK_TERM})
-      print r.status_code
-      for item in r:
+      print r.get_iterator()
+      for item in r.get_iterator():
         print item["text"]
-        self.send('{"path": "cards-manager/4002ae38-0644-440d-8743-96226fcbf07c", "message": "comment", "content": "'+remove_special_characters(item["text"]).encode("utf-8")+'"}')
+        self.send('{"path": "cards-manager/7ab0bec4-2832-4165-a67b-80256969cb89", "message": "comment", "content": "'+remove_special_characters(item["text"]).encode("utf-8")+'"}')
 
 if __name__ == '__main__':
   try:
-      ws = DummyClient('ws://localhost:8080/ws')
+      ws = DummyClient('wss://franciscogutierrez1-8080.terminal.com/ws')
       ws.connect()
       ws.run_forever()
   except KeyboardInterrupt:
