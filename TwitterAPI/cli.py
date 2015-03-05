@@ -28,19 +28,16 @@
 		 https://dev.twitter.com/docs/api/1.1
 """
 
-
 __author__ = "Jonas Geduldig"
 __date__ = "June 7, 2013"
 __license__ = "MIT"
 
-
-from . import __version__
-from .TwitterOAuth import TwitterOAuth
-from .TwitterAPI import TwitterAPI
 import argparse
 import codecs
 import json
 import sys
+from .TwitterOAuth import TwitterOAuth
+from .TwitterAPI import TwitterAPI
 
 
 def _search(name, obj):
@@ -49,7 +46,7 @@ def _search(name, obj):
     q.append(obj)
     while q:
         obj = q.pop(0)
-        if hasattr(obj, '__iter__') and type(obj) is not str:
+        if hasattr(obj, '__iter__'):
             isdict = isinstance(obj, dict)
             if isdict and name in obj:
                 return obj[name]
@@ -72,8 +69,6 @@ def _to_dict(param_list):
 
 
 if __name__ == '__main__':
-    print('TwitterAPI %s by Jonas Geduldig' % __version__)
-
     # print UTF-8 to the console
     try:
         # python 3
@@ -119,16 +114,18 @@ if __name__ == '__main__':
         params = _to_dict(args.parameters)
         oauth = TwitterOAuth.read_file(args.oauth)
 
-        api = TwitterAPI(oauth.consumer_key,
-                         oauth.consumer_secret,
-                         oauth.access_token_key,
-                         oauth.access_token_secret)
+        api = TwitterAPI(
+            oauth.consumer_key,
+            oauth.consumer_secret,
+            oauth.access_token_key,
+            oauth.access_token_secret)
         response = api.request(args.endpoint, params)
 
         for item in response.get_iterator():
-            if not args.fields:
-                print(
-                    json.dumps(item, ensure_ascii='False', indent=args.indent))
+            if 'message' in item:
+                print('ERROR %s: %s' % (item['code'], item['message']))
+            elif not args.fields:
+                print(json.dumps(item, ensure_ascii='False', indent=args.indent))  
             else:
                 for name in args.fields:
                     value = _search(name, item)
@@ -136,7 +133,7 @@ if __name__ == '__main__':
                         print('%s: %s' % (name, value))
 
     except KeyboardInterrupt:
-        print('Terminated by user')
+        print('\nTerminated by user')
 
     except Exception as e:
-        print('STOPPED: %s' % e)
+        print('*** STOPPED %s' % str(e))

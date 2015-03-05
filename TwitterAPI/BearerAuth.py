@@ -2,14 +2,9 @@ __author__ = "Andrea Biancini, Jonas Geduldig"
 __date__ = "January 3, 2014"
 __license__ = "MIT"
 
-
-from .constants import *
 import base64
+from .constants import *
 import requests
-
-
-OAUTH2_SUBDOMAIN = 'api'
-OAUTH2_ENDPOINT = 'oauth2/token'
 
 
 class BearerAuth(requests.auth.AuthBase):
@@ -29,16 +24,18 @@ class BearerAuth(requests.auth.AuthBase):
 
     def _get_access_token(self):
         token_url = '%s://%s.%s/%s' % (PROTOCOL,
-                                       OAUTH2_SUBDOMAIN,
+                                       REST_SUBDOMAIN,
                                        DOMAIN,
-                                       OAUTH2_ENDPOINT)
+                                       OAUTH2_TOKEN_ENDPOINT)
         auth = self._consumer_key + ':' + self._consumer_secret
         b64_bearer_token_creds = base64.b64encode(auth.encode('utf8'))
         params = {'grant_type': 'client_credentials'}
         headers = {}
         headers['User-Agent'] = USER_AGENT
-        headers['Authorization'] = 'Basic ' + b64_bearer_token_creds.decode('utf8')
-        headers['Content-Type'] = 'application/x-www-form-urlencoded;charset=UTF-8'
+        headers['Authorization'] = 'Basic ' + \
+            b64_bearer_token_creds.decode('utf8')
+        headers[
+            'Content-Type'] = 'application/x-www-form-urlencoded;charset=UTF-8'
         try:
             response = requests.post(
                 token_url,
@@ -48,7 +45,9 @@ class BearerAuth(requests.auth.AuthBase):
             data = response.json()
             return data['access_token']
         except Exception as e:
-            raise Exception('Error requesting bearer access token: %s' % e)
+            raise Exception(
+                'Error while requesting bearer access token: %s' %
+                e)
 
     def __call__(self, r):
         auth_list = [

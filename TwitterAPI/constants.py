@@ -8,7 +8,6 @@
 		PROTOCOL://{subdomain}.DOMAIN/VERSION/{resource}?{parameters}
 """
 
-
 __author__ = "Jonas Geduldig"
 __date__ = "February 3, 2012"
 __license__ = "MIT"
@@ -22,131 +21,130 @@ VERSION = '1.1'
 
 USER_AGENT = 'python-TwitterAPI'
 
-STREAMING_TIMEOUT = 90
-REST_TIMEOUT = 5
+STREAMING_SOCKET_TIMEOUT = 90  # 90 seconds per Twitter's recommendation
 
-ENDPOINTS = {
-    # resource:                                (method, subdomain)
+STREAMING_ENDPOINTS = {
+		# resource:                                ( subdomain )
 
-    'statuses/filter':                         ('POST', 'stream'),
-    'statuses/firehose':                       ('GET',  'stream'),
-    'statuses/sample':                         ('GET',  'stream'),
-    'site':                                    ('GET',  'sitestream'),
-    'user':                                    ('GET',  'userstream'),
+		'statuses/filter':                         ('stream',),
+		'statuses/firehose':                       ('stream',),
+		'statuses/sample':                         ('stream',),
+		'site':                                    ('sitestream',),
+		'user':                                    ('userstream',)
+}
 
-    'account/remove_profile_banner':           ('POST', 'api'),
-    'account/settings':                        ('GET',  'api'),
-    'account/update_delivery_device':          ('POST', 'api'),
-    'account/update_profile':                  ('POST', 'api'),
-    'account/update_profile_background_image': ('POST', 'api'),
-    'account/update_profile_banner':           ('POST', 'api'),
-    'account/update_profile_colors':           ('POST', 'api'),
-    'account/update_profile_image':            ('POST', 'api'),
-    'account/verify_credentials':              ('GET',  'api'),
+REST_SUBDOMAIN = 'api'
 
-    'application/rate_limit_status':           ('GET',  'api'),
+REST_SOCKET_TIMEOUT = 5
 
-    'blocks/create':                           ('POST', 'api'),
-    'blocks/destroy':                          ('POST', 'api'),
-    'blocks/ids':                              ('GET',  'api'),
-    'blocks/list':                             ('GET',  'api'),
+OAUTH2_TOKEN_ENDPOINT = 'oauth2/token'
 
-    'direct_messages':                         ('GET',  'api'),
-    'direct_messages/destroy':                 ('POST', 'api'),
-    'direct_messages/new':                     ('POST', 'api'),
-    'direct_messages/sent':                    ('GET',  'api'),
-    'direct_messages/show':                    ('GET',  'api'),
+REST_ENDPOINTS = {
+		# resource:                                ( method )
 
-    'favorites/create':                        ('POST', 'api'),
-    'favorites/destroy':                       ('POST', 'api'),
-    'favorites/list':                          ('GET',  'api'),
+		'statuses/destroy/:PARAM':                 ('POST',),  # ID
+		'statuses/home_timeline':                  ('GET',),
+		'statuses/mentions_timeline':              ('GET',),
+		'statuses/oembed':                         ('GET',),
+		'statuses/retweets_of_me':                 ('GET',),
+		'statuses/retweet/:PARAM':                 ('POST',),  # ID
+		'statuses/retweets/:PARAM':                ('GET',),   # ID
+		'statuses/show/:PARAM':                    ('GET',),   # ID
+		'statuses/user_timeline':                  ('GET',),
+		'statuses/update':                         ('POST',),
+		'statuses/update_with_media':              ('POST',),
 
-    'followers/ids':                           ('GET',  'api'),
-    'followers/list':                          ('GET',  'api'),
+		'search/tweets':                           ('GET',),
 
-    'friends/ids':                             ('GET',  'api'),
-    'friends/list':                            ('GET',  'api'),
+		'direct_messages':                         ('GET',),
+		'direct_messages/destroy':                 ('POST',),
+		'direct_messages/new':                     ('POST',),
+		'direct_messages/sent':                    ('GET',),
+		'direct_messages/show':                    ('GET',),
 
-    'friendships/create':                      ('POST', 'api'),
-    'friendships/destroy':                     ('POST', 'api'),
-    'friendships/incoming':                    ('GET',  'api'),
-    'friendships/lookup':                      ('GET',  'api'),
-    'friendships/no_retweets/ids':             ('GET',  'api'),
-    'friendships/outgoing':                    ('GET',  'api'),
-    'friendships/show':                        ('GET',  'api'),
-    'friendships/update':                      ('POST', 'api'),
+		'friends/ids':                             ('GET',),
+		'friends/list':                            ('GET',),
 
-    'lists/create':                            ('POST', 'api'),
-    'lists/destroy':                           ('POST', 'api'),
-    'lists/list':                              ('GET',  'api'),
-    'lists/members':                           ('GET',  'api'),
-    'lists/members/create':                    ('POST', 'api'),
-    'lists/members/create_all':                ('POST', 'api'),
-    'lists/members/destroy':                   ('POST', 'api'),
-    'lists/members/destroy_all':               ('POST', 'api'),
-    'lists/members/show':                      ('GET',  'api'),
-    'lists/memberships':                       ('GET',  'api'),
-    'lists/ownerships':                        ('GET',  'api'),
-    'lists/show':                              ('GET',  'api'),
-    'lists/statuses':                          ('GET',  'api'),
-    'lists/subscribers':                       ('GET',  'api'),
-    'lists/subscribers/create':                ('POST', 'api'),
-    'lists/subscribers/destroy':               ('POST', 'api'),
-    'lists/subscribers/show':                  ('GET',  'api'),
-    'lists/subscriptions':                     ('GET',  'api'),
-    'lists/update':                            ('POST', 'api'),
+		'followers/ids':                           ('GET',),
+		'followers/list':                          ('GET',),
 
-    'media/upload':                            ('POST', 'upload'),
+		'friendships/create':                      ('POST',),
+		'friendships/destroy':                     ('POST',),
+		'friendships/incoming':                    ('GET',),
+		'friendships/lookup':                      ('GET',),
+		'friendships/no_retweets/ids':             ('GET',),
+		'friendships/outgoing':                    ('GET',),
+		'friendships/show':                        ('GET',),
+		'friendships/update':                      ('POST',),
 
-    'mutes/users/create':                      ('POST', 'api'),
-    'mutes/users/destroy':                     ('POST', 'api'),
-    'mutes/users/ids':                         ('GET',  'api'),
-    'mutes/users/list':                        ('GET',  'api'),
+		'account/remove_profile_banner':           ('POST',),
+		'account/settings':                        ('GET',),
+		'account/update_delivery_device':          ('POST',),
+		'account/update_profile':                  ('POST',),
+		'account/update_profile_background_image': ('POST',),
+		'account/update_profile_banner':           ('POST',),
+		'account/update_profile_colors':           ('POST',),
+		'account/update_profile_image':            ('POST',),
+		'account/verify_credentials':              ('GET',),
 
-    'geo/id/:PARAM':                           ('GET',  'api'), # PLACE_ID
-    'geo/place':                               ('POST', 'api'),
-    'geo/reverse_geocode':                     ('GET',  'api'),
-    'geo/search':                              ('GET',  'api'),
-    'geo/similar_places':                      ('GET',  'api'),
+		'blocks/create':                           ('POST',),
+		'blocks/destroy':                          ('POST',),
+		'blocks/ids':                              ('GET',),
+		'blocks/list':                             ('GET',),
 
-    'help/configuration':                      ('GET',  'api'),
-    'help/languages':                          ('GET',  'api'),
-    'help/privacy':                            ('GET',  'api'),
-    'help/tos':                                ('GET',  'api'),
+		'users/contributees':                      ('GET',),
+		'users/contributors':                      ('GET',),
+		'users/lookup':                            ('GET',),
+		'users/profile_banner':                    ('get'),
+		'users/report_spam':                       ('POST',),
+		'users/search':                            ('GET',),
+		'users/show':                              ('GET',),
+		'users/suggestions':                       ('GET',),
+		'users/suggestions/:PARAM':                ('GET',),  # SLUG
+		'users/suggestions/:PARAM/members':        ('GET',),  # SLUG
 
-    'saved_searches/create':                   ('POST', 'api'),
-    'saved_searches/destroy/:PARAM':           ('POST', 'api'), # ID
-    'saved_searches/list':                     ('GET',  'api'),
-    'saved_searches/show/:PARAM':              ('GET',  'api'), # ID
+		'favorites/create':                        ('POST',),
+		'favorites/destroy':                       ('POST',),
+		'favorites/list':                          ('GET',),
 
-    'search/tweets':                           ('GET',  'api'),
+		'lists/create':                            ('POST',),
+		'lists/destroy':                           ('POST',),
+		'lists/list':                              ('GET',),
+		'lists/members':                           ('GET',),
+		'lists/members/create':                    ('POST',),
+		'lists/members/create_all':                ('POST',),
+		'lists/members/destroy':                   ('POST',),
+		'lists/members/destroy_all':               ('POST',),
+		'lists/members/show':                      ('GET',),
+		'lists/memberships':                       ('GET',),
+		'lists/show':                              ('GET',),
+		'lists/statuses':                          ('GET',),
+		'lists/subscribers':                       ('GET',),
+		'lists/subscribers/create':                ('POST',),
+		'lists/subscribers/destroy':               ('POST',),
+		'lists/subscribers/show':                  ('GET',),
+		'lists/subscriptions':                     ('GET',),
+		'lists/update':                            ('POST',),
 
-    'statuses/destroy/:PARAM':                 ('POST', 'api'), # ID
-    'statuses/home_timeline':                  ('GET',  'api'),
-    'statuses/lookup':                         ('GET',  'api'),
-    'statuses/mentions_timeline':              ('GET',  'api'),
-    'statuses/oembed':                         ('GET',  'api'),
-    'statuses/retweet/:PARAM':                 ('POST', 'api'), # ID
-    'statuses/retweeters/ids':                 ('GET',  'api'),
-    'statuses/retweets/:PARAM':                ('GET',  'api'), # ID
-    'statuses/retweets_of_me':                 ('GET',  'api'),
-    'statuses/show/:PARAM':                    ('GET',  'api'), # ID
-    'statuses/user_timeline':                  ('GET',  'api'),
-    'statuses/update':                         ('POST', 'api'), # deprecated
-    'statuses/update_with_media':              ('POST', 'api'),
+		'saved_searches/create':                   ('POST',),
+		'saved_searches/destroy/:PARAM':           ('POST',),  # ID
+		'saved_searches/list':                     ('GET',),
+		'saved_searches/show/:PARAM':              ('GET',),   # ID
 
-    'trends/available':                        ('GET',  'api'),
-    'trends/closest':                          ('GET',  'api'),
-    'trends/place':                            ('GET',  'api'),
+		'geo/id/:PARAM':                           ('GET',),   # PLACE_ID
+		'geo/place':                               ('POST',),
+		'geo/reverse_geocode':                     ('GET',),
+		'geo/search':                              ('GET',),
+		'geo/similar_places':                      ('GET',),
 
-    'users/contributees':                      ('GET',  'api'),
-    'users/contributors':                      ('GET',  'api'),
-    'users/lookup':                            ('GET',  'api'),
-    'users/profile_banner':                    ('GET'   'api'),
-    'users/report_spam':                       ('POST', 'api'),
-    'users/search':                            ('GET',  'api'),
-    'users/show':                              ('GET',  'api'),
-    'users/suggestions':                       ('GET',  'api'),
-    'users/suggestions/:PARAM':                ('GET',  'api'), # SLUG
-    'users/suggestions/:PARAM/members':        ('GET',  'api')  # SLUG
+		'trends/available':                        ('GET',),
+		'trends/closest':                          ('GET',),
+		'trends/place':                            ('GET',),
+
+		'help/configuration':                      ('GET',),
+		'help/languages':                          ('GET',),
+		'help/privacy':                            ('GET',),
+		'help/tos':                                ('GET',),
+
+		'application/rate_limit_status':           ('GET',)
 }

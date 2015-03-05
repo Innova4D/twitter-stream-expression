@@ -2,19 +2,12 @@ __author__ = "Jonas Geduldig"
 __date__ = "June 7, 2013"
 __license__ = "MIT"
 
-
-from .BearerAuth import BearerAuth as OAuth2
 from .constants import *
-from datetime import datetime
-from requests.exceptions import ConnectionError, ReadTimeout, SSLError
-from requests.packages.urllib3.exceptions import ReadTimeoutError, ProtocolError
-from requests_oauthlib import OAuth1
-from .TwitterError import *
 import json
+from requests_oauthlib import OAuth1
+from .BearerAuth import BearerAuth as OAuth2
+from datetime import datetime
 import requests
-import socket
-import ssl
-import time
 
 
 class TwitterAPI(object):
@@ -39,23 +32,21 @@ class TwitterAPI(object):
             proxy_url=None):
         """Initialize with your Twitter application credentials"""
         self.proxies = {'https': proxy_url} if proxy_url else None
-        if auth_type == 'oAuth1':
+        if auth_type is 'oAuth1':
             if not all([consumer_key, consumer_secret, access_token_key, access_token_secret]):
-                raise Exception('Missing authentication parameter')
+                raise Exception('Missing authentication parameter.')
             self.auth = OAuth1(
                 consumer_key,
                 consumer_secret,
                 access_token_key,
                 access_token_secret)
-        elif auth_type == 'oAuth2':
+        elif auth_type is 'oAuth2':
             if not all([consumer_key, consumer_secret]):
-                raise Exception('Missing authentication parameter')
+                raise Exception("Missing authentication parameter.")
             self.auth = OAuth2(
                 consumer_key,
                 consumer_secret,
                 proxies=self.proxies)
-        else:
-            raise Exception('Unknown oAuth version')
 
     def _prepare_url(self, subdomain, path):
         return '%s://%s.%s/%s/%s.json' % (PROTOCOL,
@@ -83,45 +74,31 @@ class TwitterAPI(object):
         :param params: Dictionary with endpoint parameters or None (default)
         :param files: Dictionary with multipart-encoded file or None (default)
 
-        :returns: TwitterResponse
-        :raises: TwitterConnectionError
+        :returns: TwitterAPI.TwitterResponse object
         """
-        resource, endpoint = self._get_endpoint(resource)
-        if endpoint not in ENDPOINTS:
-            raise Exception('Endpoint "%s" unsupported' % endpoint)
         session = requests.Session()
         session.auth = self.auth
         session.headers = {'User-Agent': USER_AGENT}
-        method, subdomain = ENDPOINTS[endpoint]
-        url = self._prepare_url(subdomain, resource)
-        if 'stream' in subdomain:
+        resource, endpoint = self._get_endpoint(resource)
+        if endpoint in STREAMING_ENDPOINTS:
             session.stream = True
-            timeout = STREAMING_TIMEOUT
-            # always use 'delimited' for efficient stream parsing
-            if not params:
-                params = {}
-            params['delimited'] = 'length'
-            params['stall_warning'] = 'true'
-        else:
+            method = 'GET' if params is None else 'POST'
+            url = self._prepare_url(STREAMING_ENDPOINTS[endpoint][0], resource)
+            timeout = STREAMING_SOCKET_TIMEOUT
+        elif endpoint in REST_ENDPOINTS:
             session.stream = False
-            timeout = REST_TIMEOUT
-        if method == 'POST':
-            data = params
-            params = None
+            method = REST_ENDPOINTS[endpoint][0]
+            url = self._prepare_url(REST_SUBDOMAIN, resource)
+            timeout = REST_SOCKET_TIMEOUT
         else:
-            data = None
-        try:
-            r = session.request(
-                method,
-                url,
-                data=data,
-                params=params,
-                timeout=timeout,
-                files=files,
-                proxies=self.proxies)
-        except (ConnectionError, ProtocolError, ReadTimeout, ReadTimeoutError, 
-                SSLError, ssl.SSLError, socket.error) as e:
-            raise TwitterConnectionError(e)
+            raise Exception('"%s" is not valid endpoint' % resource)
+        r = session.request(
+            method,
+            url,
+            params=params,
+            timeout=timeout,
+            files=files,
+            proxies=self.proxies)
         return TwitterResponse(r, session.stream)
 
 
@@ -152,34 +129,19 @@ class TwitterResponse(object):
         """:returns: Raw API response text."""
         return self.response.text
 
-    def json(self):
-        """:returns: response as JSON object."""
-        return self.response.json()
-
     def get_iterator(self):
-        """Get API dependent iterator.
-
-        :returns: Iterator for tweets or other message objects in response.
-        :raises: TwitterConnectionError, TwitterRequestError
-        """
-        if self.response.status_code != 200:
-            raise TwitterRequestError(self.response.status_code)
-
+        """:returns: TwitterAPI.StreamingIterator or TwitterAPI.RestIterator."""
         if self.stream:
-            return iter(_StreamingIterable(self.response))
+            return StreamingIterator(self.response)
         else:
-            return iter(_RestIterable(self.response))
+            return RestIterator(self.response)
 
     def __iter__(self):
-        """Get API dependent iterator.
-
-        :returns: Iterator for tweets or other message objects in response.
-        :raises: TwitterConnectionError, TwitterRequestError
-        """
-        return self.get_iterator()
+        for item in self.get_iterator():
+            yield item
 
     def get_rest_quota(self):
-        """:returns: Quota information in the REST-only response header."""
+        """:returns: Quota information in the response header.  Valid only for REST API responses."""
         remaining, limit, reset = None, None, None
         if self.response:
             if 'x-rate-limit-remaining' in self.response.headers:
@@ -192,7 +154,7 @@ class TwitterResponse(object):
         return {'remaining': remaining, 'limit': limit, 'reset': reset}
 
 
-class _RestIterable(object):
+class RestIterator(object):
 
     """Iterate statuses, errors or other iterable objects in a REST API response.
 
@@ -201,15 +163,10 @@ class _RestIterable(object):
 
     def __init__(self, response):
         resp = response.json()
-        # convert json response into something iterable
         if 'errors' in resp:
             self.results = resp['errors']
         elif 'statuses' in resp:
             self.results = resp['statuses']
-        elif 'users' in resp:
-            self.results = resp['users']
-        elif 'ids' in resp:
-            self.results = resp['ids']
         elif hasattr(resp, '__iter__') and not isinstance(resp, dict):
             if len(resp) > 0 and 'trends' in resp[0]:
                 self.results = resp[0]['trends']
@@ -224,7 +181,7 @@ class _RestIterable(object):
             yield item
 
 
-class _StreamingIterable(object):
+class StreamingIterator(object):
 
     """Iterate statuses or other objects in a Streaming API response.
 
@@ -232,71 +189,10 @@ class _StreamingIterable(object):
     """
 
     def __init__(self, response):
-        self.stream = response.raw
-
-    def _iter_stream(self):
-        """Stream parser.
-
-        :returns: Next item in the stream (may or may not be 'delimited').
-        :raises: TwitterConnectionError
-        """
-        while True:
-            item = None
-            buf = bytearray()
-            stall_timer = None
-            try:
-                while True:
-                    # read bytes until item boundary reached
-                    buf += self.stream.read(1)
-                    if not buf:
-                        # check for stall (i.e. no data for 90 seconds)
-                        if not stall_timer:
-                            stall_timer = time.time()
-                        elif time.time() - stall_timer > STREAMING_TIMEOUT:
-                            raise TwitterConnectionError('Twitter stream stalled')
-                    elif stall_timer:
-                        stall_timer = None
-                    if buf[-2:] == b'\r\n':
-                        item = buf[0:-2]
-                        if item.isdigit():
-                            # use byte size to read next item
-                            nbytes = int(item)
-                            item = None
-                            item = self.stream.read(nbytes)
-                        break
-                yield item
-            except (ConnectionError, ProtocolError, ReadTimeout, ReadTimeoutError, 
-                    SSLError, ssl.SSLError, socket.error) as e:
-                raise TwitterConnectionError(e)
+        self.results = response.iter_lines(1)
 
     def __iter__(self):
-        """Iterator.
-
-        :returns: Tweet status as a JSON object.
-        :raises: TwitterConnectionError
-        """
-        for item in self._iter_stream():
+        """Return a tweet status as a JSON object."""
+        for item in self.results:
             if item:
-                try:
-                    yield json.loads(item.decode('utf8'))
-                except ValueError as e:
-                    # invalid JSON string (possibly an unformatted error message)
-                    raise TwitterConnectionError(e)
-
-
-def RestIterator(*args, **kwargs):
-    """Deprecated. Use _RestIterable instead."""
-    from warnings import warn
-    warn('RestIterator is deprecated. Use _RestIterable instead.',
-         DeprecationWarning,
-         stacklevel=2)
-    return _RestIterable(*args, **kwargs)
-
-
-def StreamingIterator(*args, **kwargs):
-    """Deprecated. Use _StreamingIterable instead."""
-    from warnings import warn
-    warn('StreamingIterator is deprecated. Use _StreamingIterable instead.',
-         DeprecationWarning,
-         stacklevel=2)
-    return _StreamingIterable(*args, **kwargs)
+                yield json.loads(item.decode('utf-8'))
