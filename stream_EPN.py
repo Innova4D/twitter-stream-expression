@@ -41,7 +41,7 @@ class DummyClient(WebSocketClient):
       print r.get_iterator()
       for item in r.get_iterator():
         print item["text"]
-        self.send('{"path": "cards-manager/7ab0bec4-2832-4165-a67b-80256969cb89", "message": "comment", "content": "'+remove_special_characters(item["text"]).encode("utf-8")+'"}')
+        self.send('{"path": "cards-manager/64bcc231-da97-429e-90a3-d29fcb551c73", "message": "comment", "content": "'+remove_special_characters(item["text"]).encode("utf-8")+'"}')
 
 if __name__ == '__main__':
   try:
