@@ -40,7 +40,7 @@ class DummyClient(WebSocketClient):
       r = api.request("statuses/filter", {"track":TRACK_TERM})
       for item in r.get_iterator():
         print item["text"]
-        self.send('{"path": "cards-manager/7ab0bec4-2832-4165-a67b-80256969cb89", "message": "comment", "content": "'+remove_special_characters(item["text"]).encode("utf-8")+'"}')
+        self.send('{"path": "cards-manager/52e84451-4ad7-46cb-b901-21a88196140a", "message": "comment", "content": "'+remove_special_characters(item["text"]).encode("utf-8")+'"}')
 
 if __name__ == '__main__':
   try:

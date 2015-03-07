@@ -42,7 +42,7 @@ class DummyClient(WebSocketClient):
       print r.status_code
       for item in r:
         print item["text"]
-        self.send('{"path": "cards-manager/3a0b3d8d-1261-4e81-979a-3c17279830c5", "message": "comment", "content": "'+remove_special_characters(item["text"]).encode("utf-8")+'"}')
+        self.send('{"path": "cards-manager/2bf0b376-e2a5-403a-bbfd-f75dbe1b80c7", "message": "comment", "content": "'+remove_special_characters(item["text"]).encode("utf-8")+'"}')
 
 if __name__ == '__main__':
   try:
